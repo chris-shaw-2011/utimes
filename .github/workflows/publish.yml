@@ -5,136 +5,136 @@ on:
     types:
       - published
 
+permissions:
+  contents: read
+
 jobs:
   build:
     strategy:
       matrix:
-        node-version: [10.x]
-        os: [ubuntu-latest, macos-latest, windows-2019]
+        include:
+          - os: ubuntu-latest
+            extra-arch: ia32
+          - os: windows-latest
+            extra-arch: ia32
+          - os: macos-latest
+            extra-arch: ''
 
     name: build ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
+    permissions:
+      contents: write
 
     steps:
-    - name: Checkout
-      uses: actions/checkout@v2
+      - name: Checkout
+        uses: actions/checkout@v5
 
-    - name: Install gcc-multilib
-      if: matrix.os == 'ubuntu-latest'
-      run: |
-        sudo apt update
-        sudo apt install g++-multilib -y
+      - name: Install gcc-multilib
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          sudo apt update
+          sudo apt install g++-multilib -y
 
-    - name: Setup node.js
-      uses: actions/setup-node@v2
-      with:
-        node-version: ${{ matrix.node-version }}
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
 
-    - id: get_version
-      name: Extract semver
-      uses: battila7/get-version-action@v2
+      - name: Set package version
+        shell: bash
+        run: npm --no-git-tag-version version "${GITHUB_REF_NAME#v}"
 
-    - name: Set package version
-      run: npm --no-git-tag-version version ${{ steps.get_version.outputs.version-without-v }}
+      - name: Install npm dependencies
+        run: npm ci --ignore-scripts
 
-    - name: Install npm dependencies
-      run: npm ci --ignore-scripts
+      - name: Build host artifact
+        run: npm run build
 
-    - name: Build artifact (ia32)
-      if: matrix.os != 'macos-latest'
-      run: npm run build --target_arch=ia32
+      - name: Run tests
+        run: npm run test -- --runInBand
 
-    - name: Build artifact (x64)
-      run: npm run build --target_arch=x64
+      - name: Build additional artifact
+        if: matrix.extra-arch != ''
+        run: npm run build:native -- --target_arch=${{ matrix.extra-arch }}
 
-    - name: Run tests
-      run: npm run test
-
-    - name: Upload to release
-      if: steps.get_version.outputs.is-semver == 'true'
-      uses: csexton/release-asset-action@v2
-      with:
-        pattern: packages/utimes*.tar.gz
-        github-token: ${{ secrets.GITHUB_TOKEN }}
-        release-url: ${{ github.event.release.upload_url }}
+      - name: Upload to release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh release upload "${GITHUB_REF_NAME}" packages/utimes*.tar.gz --clobber
 
   build-arm:
     strategy:
       matrix:
         arch: [aarch64, armv7]
-        distro: [ubuntu18.04]
+        distro: [ubuntu22.04]
 
     name: build ${{ matrix.distro }}:${{ matrix.arch }}
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
 
     steps:
-    - name: Checkout
-      uses: actions/checkout@v2
+      - name: Checkout
+        uses: actions/checkout@v5
 
-    - id: get_version
-      name: Extract semver
-      uses: battila7/get-version-action@v2
+      - name: Set package version
+        shell: bash
+        run: npm --no-git-tag-version version "${GITHUB_REF_NAME#v}"
 
-    - name: Set package version
-      run: npm --no-git-tag-version version ${{ steps.get_version.outputs.version-without-v }}
+      - name: Build artifact (${{ matrix.arch }})
+        uses: uraimo/run-on-arch-action@v2.1.1
+        with:
+          arch: ${{ matrix.arch }}
+          distro: ${{ matrix.distro }}
+          dockerRunArgs: --volume "${PWD}:/repo"
+          install: |
+            apt-get update -y
+            apt-get install -y curl
+            curl -fsSL https://deb.nodesource.com/setup_22.x | bash -
+            apt-get install -y make g++ python nodejs
+          run: |
+            cd /repo
+            npm ci --ignore-scripts
+            npm run build
+            npm run test -- --runInBand
 
-    - name: Build artifact (${{ matrix.arch }})
-      uses: uraimo/run-on-arch-action@v2.1.1
-      with:
-        arch: ${{ matrix.arch }}
-        distro: ${{ matrix.distro }}
-        dockerRunArgs: --volume "${PWD}:/repo"
-        install: |
-          apt-get update -y
-          apt-get install -y curl
-          curl -fsSL https://deb.nodesource.com/setup_10.x | bash -
-          apt-get install -y make g++ python nodejs
-        run: |
-          cd /repo
-          npm ci --ignore-scripts
-          npm run build
-          npm run test
-
-    - name: Upload to release
-      if: steps.get_version.outputs.is-semver == 'true'
-      uses: csexton/release-asset-action@v2
-      with:
-        pattern: packages/utimes*.tar.gz
-        github-token: ${{ secrets.GITHUB_TOKEN }}
-        release-url: ${{ github.event.release.upload_url }}
+      - name: Upload to release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh release upload "${GITHUB_REF_NAME}" packages/utimes*.tar.gz --clobber
 
   publish:
     needs: [build, build-arm]
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
 
     steps:
-    - name: Checkout
-      uses: actions/checkout@v2
+      - name: Checkout
+        uses: actions/checkout@v5
 
-    - name: Setup node.js
-      uses: actions/setup-node@v2
-      with:
-        node-version: 16
-        registry-url: 'https://registry.npmjs.org'
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          registry-url: https://registry.npmjs.org
 
-    - id: get_version
-      name: Extract semver
-      uses: battila7/get-version-action@v2
+      - name: Set package version
+        shell: bash
+        run: npm --no-git-tag-version version "${GITHUB_REF_NAME#v}"
 
-    - name: Set package version
-      run: npm --no-git-tag-version version ${{ steps.get_version.outputs.version-without-v }}
+      - name: Install dependencies
+        run: npm ci --ignore-scripts
 
-    - name: Install dependencies
-      run: npm ci
+      - name: Run checks
+        run: npm run check
 
-    - name: Run tests
-      run: npm test
-
-    - name: Build source files
-      run: npm run tsc
-
-    - name: Publish to npm
-      run: npm publish
-      env:
-        NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-
+      - name: Publish to npm
+        run: npm publish --provenance
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

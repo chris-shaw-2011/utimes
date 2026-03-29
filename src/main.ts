@@ -1,6 +1,17 @@
-let _fsResolved: typeof import('fs');
-let _pathResolved: typeof import('path');
-let _bindingResolved: any;
+import { createRequire } from 'node:module';
+import * as pathModule from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+type NativeAddonBinding = {
+	utimes(path: Buffer, flags: number, btime: number, mtime: number, atime: number, resolveLinks: boolean, callback: Callback): void;
+	utimesSync(path: Buffer, flags: number, btime: number, mtime: number, atime: number, resolveLinks: boolean): void;
+};
+
+let _fsResolved: typeof import('node:fs');
+let _pathResolved: typeof import('node:path');
+let _bindingResolved: NativeAddonBinding | null | undefined;
+const require = createRequire(import.meta.url);
+const __dirname = pathModule.dirname(fileURLToPath(import.meta.url));
 
 /**
  * Wrapper on the `require` function to trick bundlers and avoid including mapbox dependencies.
@@ -17,7 +28,7 @@ const __require = (name: string) => require(name);
  */
 function fs() {
 	if (!_fsResolved) {
-		_fsResolved = __require('fs');
+		_fsResolved = __require('node:fs');
 	}
 
 	return _fsResolved;
@@ -30,7 +41,7 @@ function fs() {
  */
 function path() {
 	if (!_pathResolved) {
-		_pathResolved = __require('path');
+		_pathResolved = __require('node:path');
 	}
 
 	return _pathResolved;
@@ -39,11 +50,11 @@ function path() {
 /**
  * The native addon binding.
  */
-function nativeAddon() {
+function nativeAddon(): NativeAddonBinding | null {
 	if (_bindingResolved === undefined) {
 		const gyp = __require('@mapbox/node-pre-gyp');
 		const packagePath = path().resolve(path().join(__dirname, '../package.json'));
-		const addonPath: string = gyp.find(packagePath);
+		const addonPath = gyp.find(packagePath) as string;
 
 		if (!fs().existsSync(addonPath)) {
 			return _bindingResolved = null;
@@ -52,14 +63,24 @@ function nativeAddon() {
 		_bindingResolved = __require(addonPath);
 	}
 
-	return _bindingResolved;
+	return _bindingResolved ?? null;
 };
+
+function getNativeAddonOrThrow(): NativeAddonBinding {
+	const binding = nativeAddon();
+
+	if (binding === null) {
+		throw new Error('Native addon is unavailable');
+	}
+
+	return binding;
+}
 
 /**
  * Whether or not the current platform supports the native addon.
  */
 function useNativeAddon() {
-	if (typeof process !== 'undefined' && ['darwin', 'win32', 'linux'].indexOf(process.platform) >= 0) {
+	if (typeof process !== 'undefined' && ['darwin', 'win32', 'linux'].includes(process.platform)) {
 		if (_bindingResolved === undefined) {
 			nativeAddon();
 		}
@@ -382,7 +403,7 @@ function getFlags(options: NormalizedTimeOptions): number {
  * @param flags
  */
 function invokeBindingAsync(path: string, times: NormalizedTimeOptions, flags: number, resolveLinks: boolean, callback: Callback): void {
-	nativeAddon().utimes(getPathBuffer(path), flags, times.btime, times.mtime, times.atime, resolveLinks, (result?: Error) => {
+	getNativeAddonOrThrow().utimes(getPathBuffer(path), flags, times.btime, times.mtime, times.atime, resolveLinks, (result?: Error) => {
 		if (typeof result !== 'undefined') {
 			const name = resolveLinks ? 'utimes' : 'lutimes';
 			const message = result.message.trim().replace(/\.$/, '');
@@ -403,7 +424,7 @@ function invokeBindingAsync(path: string, times: NormalizedTimeOptions, flags: n
  */
 function invokeBindingSync(path: string, times: NormalizedTimeOptions, flags: number, resolveLinks: boolean): void {
 	try {
-		nativeAddon().utimesSync(getPathBuffer(path), flags, times.btime, times.mtime, times.atime, resolveLinks);
+		getNativeAddonOrThrow().utimesSync(getPathBuffer(path), flags, times.btime, times.mtime, times.atime, resolveLinks);
 	}
 	catch (error) {
 		const name = resolveLinks ? 'utimes' : 'lutimes';

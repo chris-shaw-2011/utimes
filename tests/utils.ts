@@ -1,7 +1,7 @@
-import { lutimes, lutimesSync, utimes, utimesSync } from '../src/main';
-import fs from 'fs';
-import assert from 'assert';
-import util from 'util';
+import { lutimes, lutimesSync, utimes, utimesSync } from '../src/main.js';
+import * as fs from 'node:fs';
+import * as assert from 'node:assert/strict';
+import * as util from 'node:util';
 
 /**
  * Returns the timestamps for the given file.

@@ -1,6 +1,7 @@
-import fs from 'fs';
-import path from 'path';
-import * as utils from './utils';
+import * as fs from 'node:fs';
+import * as path from 'node:path';
+import { jest } from '@jest/globals';
+import * as utils from './utils.js';
 
 // Create the temp directory
 const tempDir = path.join(process.cwd(), 'temp');
@@ -11,7 +12,7 @@ if (!fs.existsSync(tempDir)) {
 // Delete temp directory on cleanup
 afterAll(function() {
 	if (fs.existsSync(tempDir)) {
-		fs.rmdirSync(tempDir);
+		fs.rmSync(tempDir, { recursive: true, force: true });
 	}
 })
 
@@ -264,14 +265,14 @@ describe('Symbolic link', function() {
 describe('Directory', function() {
 	beforeEach(function() {
 		if (fs.existsSync(dirPath)) {
-			fs.rmdirSync(dirPath);
+			fs.rmSync(dirPath, { recursive: true, force: true });
 		}
 
 		fs.mkdirSync(dirPath);
 	})
 
 	afterEach(async function() {
-		fs.rmdirSync(dirPath);
+		fs.rmSync(dirPath, { recursive: true, force: true });
 	});
 
 	it('Can change atime', async function() {

@@ -2,16 +2,30 @@
 	"name": "utimes",
 	"version": "0.0.0",
 	"description": "Native addon to change the btime, mtime, and atime of a file on Windows, macOS, and Linux.",
-	"main": "dist/main.js",
-	"types": "dist/main.d.ts",
+	"type": "module",
+	"main": "./dist/main.js",
+	"types": "./dist/main.d.ts",
+	"exports": {
+		".": {
+			"types": "./dist/main.d.ts",
+			"default": "./dist/main.js"
+		},
+		"./package.json": "./package.json"
+	},
 	"files": [
 		"binding.gyp",
+		"cpp/**/*",
 		"dist/**/*",
-		"cpp/**/*"
+		"src/**/*"
 	],
-	"homepage": "https://github.com/baileyherbert/utimes",
-	"repository": "github:baileyherbert/utimes",
-	"bugs": "https://github.com/baileyherbert/utimes/issues",
+	"homepage": "https://github.com/baileyherbert/utimes#readme",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/baileyherbert/utimes.git"
+	},
+	"bugs": {
+		"url": "https://github.com/baileyherbert/utimes/issues"
+	},
 	"author": "Bailey <hello@bailey.sh> (https://github.com/baileyherbert)",
 	"contributors": [
 		"Joran Dirk Greef (https://github.com/jorangreef)",
@@ -29,14 +43,18 @@
 		"utimes"
 	],
 	"engines": {
-		"node": ">=18.0.0"
+		"node": ">=22.0.0"
 	},
 	"license": "MIT",
 	"scripts": {
 		"install": "node-pre-gyp install --fallback-to-build",
-		"build": "node-pre-gyp clean configure build package && copyfiles -f ./build/stage/**/*.tar.gz packages",
-		"tsc": "rimraf dist && tsc",
-		"test": "jest"
+		"clean": "node ./scripts/clean.cjs",
+		"build:types": "tsc -p tsconfig.json",
+		"build:native": "node-pre-gyp clean configure build package && node ./scripts/copy-stage-packages.cjs",
+		"build": "npm run clean && npm run build:types && npm run build:native",
+		"check": "npm run build && npm run test -- --runInBand",
+		"prepack": "npm run build",
+		"test": "node --experimental-vm-modules ./node_modules/jest/bin/jest.js"
 	},
 	"dependencies": {
 		"@mapbox/node-pre-gyp": "^2.0.3",
@@ -45,9 +63,7 @@
 	"devDependencies": {
 		"@types/jest": "^30.0.0",
 		"@types/node": "^25.5.0",
-		"copyfiles": "^2.4.1",
 		"jest": "^30.3.0",
-		"rimraf": "^5.0.10",
 		"ts-jest": "^29.4.6",
 		"typescript": "^5.9.3"
 	},
@@ -60,16 +76,5 @@
 		"napi_versions": [
 			3
 		]
-	},
-	"jest": {
-		"testEnvironment": "node",
-		"transform": {
-			"^.+\\.tsx?$": [
-				"ts-jest",
-				{
-					"tsconfig": "tests/tsconfig.json"
-				}
-			]
-		}
 	}
 }

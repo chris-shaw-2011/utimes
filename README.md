@@ -8,6 +8,8 @@ Native addon to change the creation time (`btime`), modified time (`mtime`), and
 npm install utimes
 ```
 
+This package supports Node.js 22 and newer and is published as an ESM-only package.
+
 ## Usage
 
 ### Files & directories

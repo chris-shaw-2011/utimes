@@ -1,37 +1,14 @@
 {
+	"extends": "./tsconfig.base.json",
 	"compilerOptions": {
+		"rootDir": "src",
 		"outDir": "dist",
-
-		"module": "commonjs",
-		"moduleResolution": "node",
-
-		"target": "es6",
-		"lib": ["es6"],
-
+		"types": ["node"],
 		"declaration": true,
-		"declarationMap": false,
+		"declarationMap": true,
 		"sourceMap": true,
-
-		"downlevelIteration": true,
-		"esModuleInterop": true,
-		"experimentalDecorators": true,
-		"resolveJsonModule": true,
-
-		"alwaysStrict": true,
-		"strict": true,
-		"noEmitOnError": true,
-		"noFallthroughCasesInSwitch": true,
-		"noUnusedLocals": false,
-		"noUnusedParameters": false,
-		"noImplicitReturns": true,
-		"importsNotUsedAsValues": "remove",
-
-		"skipLibCheck": true,
-		"stripInternal": true,
-		"removeComments": false,
-
-		"newLine": "lf"
+		"stripInternal": true
 	},
 	"include": ["src/**/*.ts"],
-	"exclude": ["node_modules", "lib", "tests"]
+	"exclude": ["dist", "lib", "node_modules", "tests"]
 }
