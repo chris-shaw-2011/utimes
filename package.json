@@ -29,7 +29,7 @@
 		"utimes"
 	],
 	"engines": {
-		"node": ">=10.0.0"
+		"node": ">=18.0.0"
 	},
 	"license": "MIT",
 	"scripts": {
@@ -39,17 +39,17 @@
 		"test": "jest"
 	},
 	"dependencies": {
-		"@mapbox/node-pre-gyp": "^1.0.11",
-		"node-addon-api": "^4.3.0"
+		"@mapbox/node-pre-gyp": "^2.0.3",
+		"node-addon-api": "^8.7.0"
 	},
 	"devDependencies": {
-		"@types/jest": "^27.0.1",
-		"@types/node": "^16.9.0",
+		"@types/jest": "^30.0.0",
+		"@types/node": "^25.5.0",
 		"copyfiles": "^2.4.1",
-		"jest": "^25.5.4",
-		"rimraf": "^3.0.2",
-		"ts-jest": "^25.5.1",
-		"typescript": "^3.9.10"
+		"jest": "^30.3.0",
+		"rimraf": "^5.0.10",
+		"ts-jest": "^29.4.6",
+		"typescript": "^5.9.3"
 	},
 	"binary": {
 		"module_name": "utimes",
@@ -62,12 +62,14 @@
 		]
 	},
 	"jest": {
-		"preset": "ts-jest",
 		"testEnvironment": "node",
-		"globals": {
-			"ts-jest": {
-				"tsconfig": "tests/tsconfig.json"
-			}
+		"transform": {
+			"^.+\\.tsx?$": [
+				"ts-jest",
+				{
+					"tsconfig": "tests/tsconfig.json"
+				}
+			]
 		}
 	}
 }
