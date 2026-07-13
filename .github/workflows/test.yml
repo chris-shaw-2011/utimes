@@ -10,24 +10,67 @@ permissions:
   contents: read
 
 jobs:
+  verify-minimum:
+    name: Verify minimum Node.js version
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 'lts/-1'
+          check-latest: true
+
+      - name: Verify package minimum tracks previous LTS
+        shell: bash
+        run: |
+          node <<'NODE'
+          const fs = require('node:fs');
+
+          const packageJson = JSON.parse(fs.readFileSync('package.json', 'utf8'));
+          const range = packageJson.engines?.node ?? '';
+          const match = range.match(/>=\s*(\d+)/);
+
+          if (!match) {
+            throw new Error(`Unable to determine minimum Node.js major from engines.node: ${range}`);
+          }
+
+          const minimumMajor = Number(match[1]);
+          const previousLtsMajor = Number(process.versions.node.split('.')[0]);
+
+          if (minimumMajor < previousLtsMajor) {
+            throw new Error(
+              `engines.node allows Node ${minimumMajor}, but lts/-1 resolved to ${process.version}; ` +
+              'raise the package minimum before dropping the previous LTS line.'
+            );
+          }
+
+          console.log(`Package minimum Node ${minimumMajor} tracks previous LTS ${previousLtsMajor}.`);
+          NODE
+
   build:
+    needs: verify-minimum
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-2022, macos-latest]
-        node-version: [22, 24, 26]
+        os: [ubuntu-24.04, windows-2022, macos-15]
+        node-version: ['lts/-1', 'lts/*', 'current']
 
     name: ${{ matrix.os }} (Node ${{ matrix.node-version }})
     runs-on: ${{ matrix.os }}
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: ${{ matrix.node-version }}
+          check-latest: true
           cache: npm
 
       - name: Install npm dependencies

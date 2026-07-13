@@ -15,16 +15,17 @@ on:
 jobs:
   build:
     strategy:
+      fail-fast: false
       matrix:
         include:
-          - os: ubuntu-latest
-            node-version: 22
+          - os: ubuntu-24.04
+            node-version: 24
             extra-arch: ia32
-          - os: windows-latest
-            node-version: 22
+          - os: windows-2022
+            node-version: 24
             extra-arch: ia32
-          - os: macos-latest
-            node-version: 22
+          - os: macos-15-intel
+            node-version: 24
             extra-arch: ''
 
     name: build ${{ matrix.os }}
@@ -32,18 +33,18 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           ref: ${{ github.event.inputs.ref }}
 
       - name: Install gcc-multilib
-        if: matrix.os == 'ubuntu-latest'
+        if: matrix.os == 'ubuntu-24.04'
         run: |
           sudo apt update
           sudo apt install g++-multilib -y
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: ${{ matrix.node-version }}
           cache: npm
@@ -69,23 +70,24 @@ jobs:
           fi
 
       - name: Upload artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: artifacts-${{ github.event.inputs.version }}
           path: packages/utimes*.tar.gz
 
   build-arm:
     strategy:
+      fail-fast: false
       matrix:
         arch: [aarch64, armv7]
-        distro: [ubuntu22.04]
+        distro: [ubuntu24.04]
 
     name: build ${{ matrix.distro }}:${{ matrix.arch }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           ref: ${{ github.event.inputs.ref }}
 
@@ -94,23 +96,30 @@ jobs:
         run: npm --no-git-tag-version --allow-same-version version "${{ github.event.inputs.version }}"
 
       - name: Build artifact (${{ matrix.arch }})
-        uses: uraimo/run-on-arch-action@v2.1.1
+        uses: uraimo/run-on-arch-action@v3
         with:
           arch: ${{ matrix.arch }}
           distro: ${{ matrix.distro }}
+          githubToken: ${{ github.token }}
           dockerRunArgs: --volume "${PWD}:/repo"
           install: |
             apt-get update -y
-            apt-get install -y curl
-            curl -fsSL https://deb.nodesource.com/setup_22.x | bash -
-            apt-get install -y make g++ python nodejs
+            apt-get install -y curl make g++ python3
+            export NVM_DIR=/root/.nvm
+            curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.3/install.sh | bash
+            . "$NVM_DIR/nvm.sh"
+            nvm install --lts
+            nvm alias default 'lts/*'
           run: |
             cd /repo
+            export NVM_DIR=/root/.nvm
+            . "$NVM_DIR/nvm.sh"
+            nvm use --lts
             npm ci --ignore-scripts
             npm run build
 
       - name: Upload artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: artifacts-${{ github.event.inputs.version }}
           path: packages/utimes*.tar.gz

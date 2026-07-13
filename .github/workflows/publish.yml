@@ -11,13 +11,14 @@ permissions:
 jobs:
   build:
     strategy:
+      fail-fast: false
       matrix:
         include:
-          - os: ubuntu-latest
+          - os: ubuntu-24.04
             extra-arch: ia32
           - os: windows-2022
             extra-arch: ia32
-          - os: macos-latest
+          - os: macos-15-intel
             extra-arch: ''
 
     name: build ${{ matrix.os }}
@@ -27,18 +28,18 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
 
       - name: Install gcc-multilib
-        if: matrix.os == 'ubuntu-latest'
+        if: matrix.os == 'ubuntu-24.04'
         run: |
           sudo apt update
           sudo apt install g++-multilib -y
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
-          node-version: 22
+          node-version: 24
           cache: npm
 
       - name: Set package version
@@ -66,36 +67,44 @@ jobs:
 
   build-arm:
     strategy:
+      fail-fast: false
       matrix:
         arch: [aarch64, armv7]
-        distro: [ubuntu22.04]
+        distro: [ubuntu24.04]
 
     name: build ${{ matrix.distro }}:${{ matrix.arch }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions:
       contents: write
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
 
       - name: Set package version
         shell: bash
         run: npm --no-git-tag-version version "${GITHUB_REF_NAME#v}"
 
       - name: Build artifact (${{ matrix.arch }})
-        uses: uraimo/run-on-arch-action@v2.1.1
+        uses: uraimo/run-on-arch-action@v3
         with:
           arch: ${{ matrix.arch }}
           distro: ${{ matrix.distro }}
+          githubToken: ${{ github.token }}
           dockerRunArgs: --volume "${PWD}:/repo"
           install: |
             apt-get update -y
-            apt-get install -y curl
-            curl -fsSL https://deb.nodesource.com/setup_22.x | bash -
-            apt-get install -y make g++ python nodejs
+            apt-get install -y curl make g++ python3
+            export NVM_DIR=/root/.nvm
+            curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.3/install.sh | bash
+            . "$NVM_DIR/nvm.sh"
+            nvm install --lts
+            nvm alias default 'lts/*'
           run: |
             cd /repo
+            export NVM_DIR=/root/.nvm
+            . "$NVM_DIR/nvm.sh"
+            nvm use --lts
             npm ci --ignore-scripts
             npm run build
             npm run test -- --runInBand
@@ -108,17 +117,17 @@ jobs:
 
   publish:
     needs: [build, build-arm]
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions:
       contents: read
       packages: write
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: 24
           cache: npm
