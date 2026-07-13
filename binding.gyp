@@ -1,7 +1,4 @@
 {
-	"variables": {
-		"enable_thin_lto": "false"
-	},
 	"targets": [
 		{
 			"target_name": "utimes",
@@ -18,7 +15,16 @@
 			},
 			"msvs_settings": {
 				"VCCLCompilerTool": {
-					"ExceptionHandling": 1
+					"ExceptionHandling": 1,
+					"AdditionalOptions!": [
+						"-flto=thin"
+					]
+				},
+				"VCLinkerTool": {
+					"AdditionalOptions!": [
+						"-flto=thin",
+						"/opt:lldltojobs=2"
+					]
 				},
 			},
 			"sources": [
