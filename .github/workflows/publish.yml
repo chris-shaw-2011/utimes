@@ -15,7 +15,7 @@ jobs:
         include:
           - os: ubuntu-latest
             extra-arch: ia32
-          - os: windows-latest
+          - os: windows-2022
             extra-arch: ia32
           - os: macos-latest
             extra-arch: ''
