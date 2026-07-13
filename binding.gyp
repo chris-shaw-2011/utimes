@@ -1,4 +1,7 @@
 {
+	"variables": {
+		"enable_thin_lto": "false"
+	},
 	"targets": [
 		{
 			"target_name": "utimes",
