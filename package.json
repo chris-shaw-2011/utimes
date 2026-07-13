@@ -61,14 +61,14 @@
 	},
 	"dependencies": {
 		"@mapbox/node-pre-gyp": "^2.0.3",
-		"node-addon-api": "^8.7.0"
+		"node-addon-api": "^8.9.0"
 	},
 	"devDependencies": {
 		"@types/jest": "^30.0.0",
-		"@types/node": "^25.5.0",
-		"jest": "^30.3.0",
-		"ts-jest": "^29.4.6",
-		"typescript": "^5.9.3"
+		"@types/node": "^26.1.1",
+		"jest": "^30.4.2",
+		"ts-jest": "^29.4.11",
+		"typescript": "^6.0.3"
 	},
 	"binary": {
 		"module_name": "utimes",
