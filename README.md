@@ -1,14 +1,25 @@
-# utimes
+# @chris-shaw-2011/utimes
 
 Native addon to change the creation time (`btime`), modified time (`mtime`), and access time (`atime`) of files, directories, and symbolic links on Windows, macOS, and Linux.
 
+> Personal test build: this fork exists for testing purposes while updating dependencies and related project tooling. It is not the canonical upstream package.
+
 ## Installation
 
-```
-npm install utimes
+This fork is published to GitHub Packages rather than the public npm registry.
+
+Add the GitHub Packages registry for the `@chris-shaw-2011` scope and authenticate with a GitHub token that has `read:packages` access:
+
+```ini
+@chris-shaw-2011:registry=https://npm.pkg.github.com
+//npm.pkg.github.com/:_authToken=YOUR_GITHUB_TOKEN
 ```
 
-This package supports Node.js 22 and newer and is published as an ESM-only package.
+```sh
+npm install @chris-shaw-2011/utimes
+```
+
+This package supports Node.js 22 and newer, is published as an ESM-only package to GitHub Packages, and is maintained from the [`chris-shaw-2011/utimes`](https://github.com/chris-shaw-2011/utimes) fork for personal dependency-update testing.
 
 ## Usage
 
@@ -17,7 +28,7 @@ This package supports Node.js 22 and newer and is published as an ESM-only packa
 The `utimes()` function is used to update the timestamps on files and directories. For paths which resolve to symbolic links, the link's target file will be changed instead.
 
 ```ts
-import { utimes } from 'utimes';
+import { utimes } from '@chris-shaw-2011/utimes';
 
 // Change all times at once
 await utimes('/path/to/file', 447775200000);
@@ -35,7 +46,7 @@ await utimes('/path/to/file', {
 The `lutimes()` function is identical to `utimes()`, but for paths which resolve to symbolic links, the links themselves will be changed, and their target files will be unaffected.
 
 ```ts
-import { lutimes } from 'utimes';
+import { lutimes } from '@chris-shaw-2011/utimes';
 
 await lutimes('/path/to/symlink', {
     btime: 447775200000
@@ -58,7 +69,7 @@ utimes('/path/to/file', 447775200000, function(error) {
 This package also offers synchronous versions of its functions.
 
 ```ts
-import { utimesSync, lutimesSync } from 'utimes';
+import { utimesSync, lutimesSync } from '@chris-shaw-2011/utimes';
 
 utimesSync('/path/to/file', 447775200000);
 lutimesSync('/path/to/symlink', 447775200000);
@@ -76,9 +87,9 @@ Error {
 
 ## Prebuilt binaries
 
-This package uses C++ bindings that must be built for the current operating system and architecture. Because build tools are often not available, prebuilt binaries are provided for common platforms, and will be downloaded where applicable during package installation. These binaries are public and can be found on the [releases page](https://github.com/baileyherbert/utimes/releases).
+This package uses C++ bindings that must be built for the current operating system and architecture. Because build tools are often not available, prebuilt binaries are provided for common platforms, and will be downloaded where applicable during package installation. These binaries are public and can be found on the [releases page](https://github.com/chris-shaw-2011/utimes/releases).
 
-The latest version of `utimes` provides the following prebuilt binaries:
+The latest version of `@chris-shaw-2011/utimes` provides the following prebuilt binaries:
 
 |            | x86 | x64 | armv7 | arm64 |
 | ---------- | --- | --- | ----- | ----- |
@@ -104,4 +115,4 @@ This was originally a fork of [@ronomon/utimes](https://www.npmjs.com/package/@r
 - Throws descriptive error messages
 - Modern API with both promises and callbacks written in TypeScript
 
-Huge thanks to all of the [contributors](https://github.com/baileyherbert/utimes/graphs/contributors) who helped with maintaining and improving this package!
+Huge thanks to all of the [contributors](https://github.com/chris-shaw-2011/utimes/graphs/contributors) who helped with maintaining and improving this package!

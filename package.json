@@ -1,5 +1,5 @@
 {
-	"name": "utimes",
+	"name": "@chris-shaw-2011/utimes",
 	"version": "0.0.0",
 	"description": "Native addon to change the btime, mtime, and atime of a file on Windows, macOS, and Linux.",
 	"type": "module",
@@ -18,13 +18,13 @@
 		"dist/**/*",
 		"src/**/*"
 	],
-	"homepage": "https://github.com/baileyherbert/utimes#readme",
+	"homepage": "https://github.com/chris-shaw-2011/utimes#readme",
 	"repository": {
 		"type": "git",
-		"url": "git+https://github.com/baileyherbert/utimes.git"
+		"url": "git+https://github.com/chris-shaw-2011/utimes.git"
 	},
 	"bugs": {
-		"url": "https://github.com/baileyherbert/utimes/issues"
+		"url": "https://github.com/chris-shaw-2011/utimes/issues"
 	},
 	"author": "Bailey <hello@bailey.sh> (https://github.com/baileyherbert)",
 	"contributors": [
@@ -46,6 +46,9 @@
 		"node": ">=22.0.0"
 	},
 	"license": "MIT",
+	"publishConfig": {
+		"registry": "https://npm.pkg.github.com"
+	},
 	"scripts": {
 		"install": "node-pre-gyp install --fallback-to-build",
 		"clean": "node ./scripts/clean.cjs",
@@ -70,7 +73,7 @@
 	"binary": {
 		"module_name": "utimes",
 		"module_path": "./lib/binding/napi-v{napi_build_version}",
-		"host": "https://github.com/baileyherbert/utimes/releases/download/",
+		"host": "https://github.com/chris-shaw-2011/utimes/releases/download/",
 		"remote_path": "v{version}",
 		"package_name": "{module_name}-v{version}-napi-v{napi_build_version}-{platform}-{arch}.tar.gz",
 		"napi_versions": [
