@@ -112,9 +112,11 @@ jobs:
             nvm alias default 'lts/*'
           run: |
             cd /repo
+            set +u
             export NVM_DIR=/root/.nvm
             . "$NVM_DIR/nvm.sh"
             nvm use --lts
+            set -u
             npm ci --ignore-scripts
             npm run build
 
